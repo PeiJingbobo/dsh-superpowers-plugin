@@ -154,13 +154,21 @@ const currentSkills = new Set(listSkillDirs(skillsDest))
 const added = [...currentSkills].filter(name => !previousSkills.has(name))
 const removed = [...previousSkills].filter(name => !currentSkills.has(name))
 
-writeFileSync(upstreamManifestPath, `${JSON.stringify({
+// Persist the manifest only when a tracking fact changed: refreshing syncedAt
+// on every run would make CI commit "chore(sync)" for zero real drift.
+const nextManifest = {
   repo,
   ref,
   commit,
   ...(upstreamVersion !== null ? { upstreamVersion } : {}),
   syncedAt: new Date().toISOString(),
-}, null, 2)}\n`)
+}
+const trackingFacts = ({ repo: r, ref: f, commit: c, upstreamVersion: v }) => JSON.stringify([r, f, c, v ?? null])
+if (trackingFacts(nextManifest) !== trackingFacts(manifest)) {
+  writeFileSync(upstreamManifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`)
+} else {
+  console.log('sync-upstream: UPSTREAM.json unchanged (tracking facts identical)')
+}
 
 console.log(`sync-upstream: skills/ updated to ${repo}${commit ? `@${commit.slice(0, 12)}` : ''} (ref ${ref})`)
 if (upstreamVersion !== null) console.log(`sync-upstream: tracking upstream version ${upstreamVersion} (package.json updated when changed)`)
