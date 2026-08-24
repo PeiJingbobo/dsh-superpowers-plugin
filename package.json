@@ -1,5 +1,5 @@
 {
-  "name": "dsh-superpowers",
+  "name": "dsh-superpowers-plugin",
   "version": "6.3.0",
   "description": "DeepSeek Harness bundle that serves the obra/superpowers skill library as native DSH skills, with upstream tracking and one-command sync",
   "license": "MIT",

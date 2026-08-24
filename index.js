@@ -1,5 +1,5 @@
 /**
- * dsh-superpowers — serve the obra/superpowers skill library as native DeepSeek Harness skills.
+ * dsh-superpowers-plugin — serve the obra/superpowers skill library as native DeepSeek Harness skills.
  *
  * This plugin is a DeepSeek Harness bundle (`dsh.bundle`). It contributes two things:
  *
@@ -36,14 +36,14 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 
-export const name = 'superpowers'
+export const name = 'dsh-superpowers-plugin'
 export const inject = ['skills', 'agents']
 
 /** Reserved provider name in the skill registry (owned by runtime registrations). */
 const RESERVED_PROVIDER = 'runtime'
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const DEFAULTS = Object.freeze({
-  providerName: 'superpowers',
+  providerName: 'dsh-superpowers-plugin',
   rank: 600,
   source: 'bundled',
   disabledSkills: [],
@@ -66,22 +66,22 @@ function resolveConfig(config = {}) {
     ...(Array.isArray(config?.disabledSkills) ? { disabledSkills: [...config.disabledSkills] } : {}),
   }
   if (typeof merged.providerName !== 'string' || merged.providerName.length === 0) {
-    throw new Error('dsh-superpowers: providerName must be a non-empty string')
+    throw new Error('dsh-superpowers-plugin: providerName must be a non-empty string')
   }
   if (merged.providerName === RESERVED_PROVIDER) {
-    throw new Error(`dsh-superpowers: providerName "${RESERVED_PROVIDER}" is reserved`)
+    throw new Error(`dsh-superpowers-plugin: providerName "${RESERVED_PROVIDER}" is reserved`)
   }
   if (!Number.isFinite(merged.rank)) {
-    throw new Error('dsh-superpowers: rank must be a finite number')
+    throw new Error('dsh-superpowers-plugin: rank must be a finite number')
   }
   if (typeof merged.source !== 'string' || merged.source.length === 0) {
-    throw new Error('dsh-superpowers: source must be a non-empty string')
+    throw new Error('dsh-superpowers-plugin: source must be a non-empty string')
   }
   if (!Array.isArray(merged.disabledSkills) || merged.disabledSkills.some(s => typeof s !== 'string')) {
-    throw new Error('dsh-superpowers: disabledSkills must be an array of skill names')
+    throw new Error('dsh-superpowers-plugin: disabledSkills must be an array of skill names')
   }
   if (typeof merged.bootstrap !== 'boolean') {
-    throw new Error('dsh-superpowers: bootstrap must be a boolean')
+    throw new Error('dsh-superpowers-plugin: bootstrap must be a boolean')
   }
   merged.skillsDir = merged.skillsDir === undefined
     ? fileURLToPath(new URL('./skills/', import.meta.url))
@@ -173,7 +173,7 @@ async function discoverSkills(skillsDir, providerName, config, logger) {
   try {
     entries = await readdir(skillsDir, { withFileTypes: true })
   } catch (error) {
-    logger.warn?.(`dsh-superpowers: cannot read skills dir "${skillsDir}": ${error?.message ?? error}`)
+    logger.warn?.(`dsh-superpowers-plugin: cannot read skills dir "${skillsDir}": ${error?.message ?? error}`)
     return []
   }
   const disabled = new Set(config.disabledSkills)
@@ -189,16 +189,16 @@ async function discoverSkills(skillsDir, providerName, config, logger) {
       continue // no SKILL.md (or unreadable): not a skill bundle
     }
     if (parsed === null) {
-      logger.warn?.(`dsh-superpowers: skipping "${entry.name}" — SKILL.md has no frontmatter`)
+      logger.warn?.(`dsh-superpowers-plugin: skipping "${entry.name}" — SKILL.md has no frontmatter`)
       continue
     }
     const fields = toSkillFields(parsed.data, entry.name)
     if (!SKILL_NAME.test(fields.name)) {
-      logger.warn?.(`dsh-superpowers: skipping "${entry.name}" — invalid skill name "${fields.name}"`)
+      logger.warn?.(`dsh-superpowers-plugin: skipping "${entry.name}" — invalid skill name "${fields.name}"`)
       continue
     }
     if (fields.description === '') {
-      logger.warn?.(`dsh-superpowers: skipping "${entry.name}" — empty description`)
+      logger.warn?.(`dsh-superpowers-plugin: skipping "${entry.name}" — empty description`)
       continue
     }
     if (disabled.has(fields.name)) continue
@@ -285,7 +285,7 @@ class SuperpowersSkillProvider {
       try {
         watcher = fsWatch(this.#config.skillsDir, () => this.#invalidateDebounced())
       } catch (error) {
-        this.#ctx.logger.warn?.(`dsh-superpowers: skills watcher unavailable (${error?.message ?? error}); synced skills appear after restart`)
+        this.#ctx.logger.warn?.(`dsh-superpowers-plugin: skills watcher unavailable (${error?.message ?? error}); synced skills appear after restart`)
         return
       }
     }
@@ -418,7 +418,7 @@ function registerBootstrap(ctx, config) {
   const getBody = () => {
     bodyPromise ??= loadBootstrapBody(config).then((body) => {
       // A sync can add using-superpowers later; retry after any catalog change.
-      if (body === null) ctx.logger.warn?.('dsh-superpowers: bootstrap skipped — skills/using-superpowers/SKILL.md not found')
+      if (body === null) ctx.logger.warn?.('dsh-superpowers-plugin: bootstrap skipped — skills/using-superpowers/SKILL.md not found')
       return body
     })
     return bodyPromise
@@ -449,10 +449,10 @@ function registerBootstrap(ctx, config) {
  */
 export function apply(ctx, config = {}) {
   if (typeof ctx?.skills?.registerProvider !== 'function') {
-    throw new Error('dsh-superpowers requires the `skills` service (dsh-skill); add @deepseek-ai/dsh-base or equivalent to the profile')
+    throw new Error('dsh-superpowers-plugin requires the `skills` service (dsh-skill); add @deepseek-ai/dsh-base or equivalent to the profile')
   }
   const resolved = resolveConfig(config)
   ctx.skills.registerProvider(control => new SuperpowersSkillProvider(ctx, control, resolved))
   if (resolved.bootstrap) registerBootstrap(ctx, resolved)
-  ctx.logger.info?.(`dsh-superpowers: serving skills from ${resolved.skillsDir}`)
+  ctx.logger.info?.(`dsh-superpowers-plugin: serving skills from ${resolved.skillsDir}`)
 }

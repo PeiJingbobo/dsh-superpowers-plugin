@@ -78,7 +78,7 @@ test('provider discovers all vendored upstream skills', async (t) => {
   for (const candidate of candidates) {
     assert.match(candidate.name, /^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     assert.ok(candidate.description.length > 0)
-    assert.equal(candidate.provider, 'superpowers')
+    assert.equal(candidate.provider, 'dsh-superpowers-plugin')
     assert.equal(candidate.source, 'bundled')
     assert.equal(candidate.rank, 600)
     assert.equal(candidate.invocation.modelInvocable, true)

@@ -96,7 +96,7 @@ jobs:
           **Install**
 
           \`\`\`sh
-          dsh plugin add ./dsh-superpowers-${{ steps.meta.outputs.version }}.tgz
+          dsh plugin add ./dsh-superpowers-plugin-${{ steps.meta.outputs.version }}.tgz
           \`\`\`
 
           Skills are served as native DeepSeek Harness skills; see the README for configuration and upstream-sync details.

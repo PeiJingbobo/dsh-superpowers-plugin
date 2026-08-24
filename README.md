@@ -1,4 +1,4 @@
-# dsh-superpowers
+# dsh-superpowers-plugin
 
 [![Release](https://img.shields.io/github/v/release/PeiJingbobo/dsh-superpowers-plugin?sort=semver)](https://github.com/PeiJingbobo/dsh-superpowers-plugin/releases)
 [![Sync upstream & release](https://github.com/PeiJingbobo/dsh-superpowers-plugin/actions/workflows/sync-and-release.yml/badge.svg)](https://github.com/PeiJingbobo/dsh-superpowers-plugin/actions/workflows/sync-and-release.yml)
@@ -37,7 +37,7 @@ dsh plugin add github:PeiJingbobo/dsh-superpowers-plugin
 
 # 方式二:下载 Release 产物安装
 gh release download --repo PeiJingbobo/dsh-superpowers-plugin -p '*.tgz'
-dsh plugin add ./dsh-superpowers-*.tgz
+dsh plugin add ./dsh-superpowers-plugin-*.tgz
 
 # 方式三:本地目录(开发体验)
 dsh plugin add /path/to/dsh-superpowers-plugin
@@ -49,7 +49,7 @@ dsh web            # 或: dsh --profile <你的profile>
 安装即生效:`dsh plugin add` 会识别包内的 `dsh.bundle` 清单并把插件行写入 profile。启动日志会出现:
 
 ```
-dsh-superpowers: serving skills from .../skills
+dsh-superpowers-plugin: serving skills from .../skills
 ```
 
 ### 源码开发模式(不安装)
@@ -104,7 +104,7 @@ node scripts/sync-upstream.mjs --repo <url> --ref <branch>   # 临时换源(会�
 
 ```yaml
 - update:
-    id: superpowers-skills
+    id: dsh-superpowers-plugin
     config:
       bootstrap: false
       disabledSkills: [using-git-worktrees]
@@ -113,7 +113,7 @@ node scripts/sync-upstream.mjs --repo <url> --ref <branch>   # 临时换源(会�
 ## 验证
 
 ```sh
-dsh --dump-config          # 应看到 "# == dsh-superpowers" 层与 superpowers-skills 行
+dsh --dump-config          # 应看到 "# == dsh-superpowers-plugin" 层与 dsh-superpowers-plugin 行
 ```
 
 进入会话后:
@@ -133,7 +133,7 @@ node --test test/*.test.mjs    # 11 个用例:frontmatter 解析、发现/加载
 ```
 dsh-superpowers-plugin/
 ├── package.json            # dsh.bundle 清单(patch: ./cordis.patch.yml);版本跟随上游
-├── cordis.patch.yml        # bundle 层:插入 superpowers-skills 插件行
+├── cordis.patch.yml        # bundle 层:插入 dsh-superpowers-plugin 插件行
 ├── cordis.local.example.yml# 源码开发 overlay 模板
 ├── index.js                # 插件主体:skill provider + 会话引导(零依赖 ESM)
 ├── scripts/sync-upstream.mjs # 上游同步脚本(含版本捕获)

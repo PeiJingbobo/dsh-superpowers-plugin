@@ -5,7 +5,7 @@
 #
 # 注意:name 必须是绝对路径;--patch 层在所有 bundle 层之后生效。
 - insert:
-    - id: superpowers-skills
+    - id: dsh-superpowers-plugin
       name: /Volumes/HD-DATA/Coding/dsh-superpowers-plugin/index.js
       config:
         # 全部可省略;此处展示可用字段
