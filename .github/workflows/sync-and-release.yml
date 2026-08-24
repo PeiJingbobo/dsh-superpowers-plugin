@@ -1,0 +1,105 @@
+# Sync-and-release pipeline for dsh-superpowers-plugin.
+#
+# Triggers:
+#   - push to main: re-sync the vendored snapshot, test, package, release if the
+#     version tag is new (commits made with GITHUB_TOKEN do not re-trigger this
+#     workflow, so there is no loop).
+#   - schedule: poll the upstream repository. GitHub cannot be web-hooked by an
+#     external repo, so periodic polling is the "upstream updated → build" rule.
+#     Note: scheduled workflows pause automatically after 60 days of repository
+#     inactivity; any push or manual run re-arms them.
+#   - workflow_dispatch: manual run (optionally with upstream overrides).
+#
+# Versioning: the plugin ships exactly one snapshot per upstream release — the
+# sync step copies obra/superpowers' package.json version into ours, and the
+# release step publishes tag v<version> with the packed tarball. Re-runs for an
+# existing tag skip release creation.
+
+name: Sync upstream & release
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 */6 * * *' # every 6 hours, off the top of the hour
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Optional upstream override (git URL or local-style path)'
+        required: false
+      ref:
+        description: 'Optional upstream ref override (branch/tag)'
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-and-release
+  cancel-in-progress: false
+
+jobs:
+  sync-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Sync upstream snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ARGS=()
+          if [[ -n "${{ github.event.inputs.repo || '' }}" ]]; then ARGS+=(--repo "${{ github.event.inputs.repo }}"); fi
+          if [[ -n "${{ github.event.inputs.ref || '' }}" ]]; then ARGS+=(--ref "${{ github.event.inputs.ref }}"); fi
+          node scripts/sync-upstream.mjs "${ARGS[@]}"
+
+      - name: Read release metadata
+        id: meta
+        run: |
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "upstream_commit=$(node -p "JSON.parse(require('fs').readFileSync('UPSTREAM.json','utf8')).commit || 'unknown'")" >> "$GITHUB_OUTPUT"
+
+      - name: Commit synced snapshot
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add -A
+            git commit -m "chore(sync): upstream superpowers@${{ steps.meta.outputs.upstream_commit }}"
+            git push
+          else
+            echo "No upstream drift; tree already current."
+          fi
+
+      - name: Test
+        run: node --test test/*.test.mjs
+
+      - name: Package tarball
+        run: |
+          mkdir -p dist
+          npm pack --pack-destination dist
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.meta.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; skipping."
+            exit 0
+          fi
+          NOTES="$(cat <<EOF
+          Vendored [obra/superpowers](https://github.com/obra/superpowers) snapshot @ ${{ steps.meta.outputs.upstream_commit }} (upstream v${{ steps.meta.outputs.version }}).
+
+          **Install**
+
+          \`\`\`sh
+          dsh plugin add ./dsh-superpowers-${{ steps.meta.outputs.version }}.tgz
+          \`\`\`
+
+          Skills are served as native DeepSeek Harness skills; see the README for configuration and upstream-sync details.
+          EOF
+          )"
+          gh release create "$TAG" dist/*.tgz --title "superpowers $TAG" --notes "$NOTES"

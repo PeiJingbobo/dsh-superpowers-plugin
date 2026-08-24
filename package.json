@@ -1,0 +1,43 @@
+{
+  "name": "dsh-superpowers",
+  "version": "6.3.0",
+  "description": "DeepSeek Harness bundle that serves the obra/superpowers skill library as native DSH skills, with upstream tracking and one-command sync",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "skills/",
+    "scripts/sync-upstream.mjs",
+    "UPSTREAM.json",
+    "LICENSE-SUPERPOWERS",
+    "README.md"
+  ],
+  "scripts": {
+    "sync": "node scripts/sync-upstream.mjs",
+    "sync:check": "node scripts/sync-upstream.mjs --check",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/obra/superpowers"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "dsh-bundle",
+    "superpowers",
+    "skills",
+    "tdd",
+    "debugging"
+  ]
+}

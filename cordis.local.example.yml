@@ -1,0 +1,17 @@
+# 开发调试用 overlay:不经 `dsh plugin add`,直接以绝对路径加载本插件。
+#
+# 用法(deepseek-harness 仓库根目录):
+#   pnpm dsh web --patch /Volumes/HD-DATA/Coding/dsh-superpowers-plugin/cordis.local.example.yml
+#
+# 注意:name 必须是绝对路径;--patch 层在所有 bundle 层之后生效。
+- insert:
+    - id: superpowers-skills
+      name: /Volumes/HD-DATA/Coding/dsh-superpowers-plugin/index.js
+      config:
+        # 全部可省略;此处展示可用字段
+        providerName: superpowers
+        # skillsDir: /path/to/a/superpowers-checkout/skills   # 指向任意上游克隆
+        # disabledSkills: []
+        # rank: 600
+        # source: bundled
+        bootstrap: true
